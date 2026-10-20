@@ -446,3 +446,32 @@ body:not(.loaded) .hero-photo .disc, body:not(.loaded) .hero-photo .ring { trans
   .t-item.reveal .t-ic { transform: none; }
 }
 @media (max-width: 900px) { .hero h1 { white-space: normal; } }
+
+/* ===== Lamsat Wafa ===== */
+.timeline { grid-template-columns: repeat(7, 1fr); gap: 14px; }
+.timeline::before { right: 7%; left: 7%; }
+.wafa { display: grid; grid-template-columns: 1.05fr 1fr; gap: 26px; align-items: stretch; }
+.wafa-role { position: relative; overflow: hidden; border-radius: 24px; padding: 40px; color: #fff;
+  background: linear-gradient(140deg, #ff5a4f 0%, #e5232f 50%, #b3141f 100%); box-shadow: 0 26px 46px -26px rgba(229,35,47,.9); }
+.wafa-role::after { content: ""; position: absolute; width: 340px; height: 340px; left: -120px; bottom: -150px; border-radius: 50%; background: rgba(255,255,255,.09); }
+.w-tag { display: inline-block; font-size: .85rem; font-weight: 500; padding: 5px 14px; border-radius: 99px; background: rgba(255,255,255,.18); }
+.wafa-role h3 { font-family: var(--display); font-size: clamp(1.6rem, 2.8vw, 2.2rem); font-weight: 800; line-height: 1.4; margin: 14px 0 10px; }
+.wafa-role > p { color: rgba(255,255,255,.9); }
+.w-duties { position: relative; z-index: 1; display: grid; gap: 12px; margin-top: 24px; }
+.w-duty { display: flex; gap: 14px; align-items: flex-start; background: rgba(255,255,255,.13); border-radius: 16px; padding: 16px 18px; transition: background .3s, transform .3s; }
+.w-duty:hover { background: rgba(255,255,255,.2); transform: translateX(-4px); }
+.w-duty .w-ic { width: 44px; height: 44px; flex: none; border-radius: 12px; background: #fff; color: var(--red); display: grid; place-items: center; }
+.w-duty .w-ic svg { width: 22px; height: 22px; }
+.w-duty b { display: block; font-size: 1.02rem; }
+.w-duty div span { font-size: .9rem; color: rgba(255,255,255,.88); line-height: 1.7; }
+.wafa-about { display: grid; gap: 16px; align-content: start; }
+.w-card { background: var(--white); border-radius: var(--radius); padding: 22px 26px; box-shadow: var(--shadow); border-right: 4px solid var(--red); }
+.w-k { font-family: var(--display); font-weight: 700; color: var(--red); font-size: 1.05rem; }
+.w-card p { color: var(--ink-2); font-size: .97rem; margin-top: 4px; }
+.w-goals { list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px; margin-top: 8px; }
+.w-goals li { display: flex; gap: 8px; font-size: .93rem; color: var(--ink-2); line-height: 1.6; }
+.w-goals li::before { content: "✓"; color: var(--red); font-weight: 700; }
+.w-motto { text-align: center; font-family: var(--display); font-weight: 700; font-size: 1.25rem; color: var(--red-2); background: var(--red-soft); border-radius: var(--radius); padding: 16px; }
+@media (max-width: 1080px) { .timeline { grid-template-columns: repeat(4, 1fr); } }
+@media (max-width: 900px) { .wafa { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .timeline { grid-template-columns: 1fr 1fr; } .wafa-role { padding: 28px 22px; } .w-goals { grid-template-columns: 1fr; } }
