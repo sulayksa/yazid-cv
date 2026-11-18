@@ -1,6 +1,6 @@
-# يزيد يعقوب إلياس — Portfolio 3D
+# يزيد يعقوب إلياس — Modern Light Portfolio
 
-موقع ثابت (Static) بتصميم فاخر ثلاثي الأبعاد: three.js للمشاهد، وحركات ظهور عند التمرير بنفس نظام موقع تاور لاند.
+موقع ثابت (Static) بتصميم عصري فاتح مع عناصر ثلاثية الأبعاد وتمرير ناعم (Lenis): three.js للمشاهد، وحركات ظهور عند التمرير بنفس نظام موقع تاور لاند.
 
 ## النشر على Cloudflare Pages (مجاني على pages.dev)
 1. dash.cloudflare.com → Workers & Pages → Create → Pages → **Connect to Git**.
