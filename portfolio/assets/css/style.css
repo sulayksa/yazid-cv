@@ -439,3 +439,18 @@ mark { background: linear-gradient(transparent 60%, rgba(217, 180, 95, .45) 60%)
 .arch-pattern { will-change: transform; }
 .marquee-track, .progress span, .journey-meter span { will-change: transform; }
 .work, .vol, .step, .bento .card { contain: layout style; }
+
+/* ---------- Motion stack ---------- */
+html.lenis, html.lenis body { height: auto; }
+html.lenis { scroll-behavior: auto; }
+main > section { overflow-x: clip; }
+.js [data-blur] { opacity: 0; }
+.gs-on [data-blur], .no-gs [data-blur] { opacity: 1; }
+.no-gs [data-reveal] { opacity: 1; transform: none; }
+.bw { display: inline-block; }
+.hero-rays { position: absolute; inset: 0; pointer-events: none; -webkit-mask: linear-gradient(#000 45%, transparent 95%); mask: linear-gradient(#000 45%, transparent 95%); }
+.light-rays { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.light-rays__canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+.star-border { position: relative; isolation: isolate; }
+.star-border::before { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; box-shadow: inset 0 0 0 var(--star-border-thickness, 1.5px) var(--star-border-track, rgba(255,255,255,.18)); pointer-events: none; }
+.star-border__light { position: absolute; top: -48px; left: -48px; z-index: -1; width: calc(100% + 96px); height: calc(100% + 96px); pointer-events: none; }
