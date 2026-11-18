@@ -12,7 +12,7 @@
   const raysHost = document.querySelector('.hero-rays');
   if (raysHost && RB) {
     try {
-      RB.LightRays.mount(raysHost, {
+      const rays = RB.LightRays.mount(raysHost, {
         raysOrigin: 'top-center',
         raysColor: '#0f5c3f',
         lightMode: true,
@@ -28,8 +28,9 @@
         cursorShadow: false,
         clickPulse: false,
         intro: !reduce,
-        maxDevicePixelRatio: 1.5
+        maxDevicePixelRatio: 1
       });
+      window.addEventListener('perf-low', () => { rays.destroy(); raysHost.innerHTML = ''; }, { once: true });
     } catch (e) { console.warn('LightRays unavailable', e); }
   }
 

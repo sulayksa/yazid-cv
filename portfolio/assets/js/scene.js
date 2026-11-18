@@ -10,17 +10,46 @@ const hasGL = (() => { try { const c = document.createElement('canvas'); return 
 if (!hasGL) throw new Error('WebGL unavailable — static fallback');
 
 function renderer(canvas) {
-  const r = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
-  r.setPixelRatio(Math.min(window.devicePixelRatio, mobile ? 1.5 : 2));
+  const dpr = Math.min(window.devicePixelRatio || 1, mobile ? 1.5 : 1.75);
+  const r = new THREE.WebGLRenderer({ canvas, antialias: dpr < 1.5, alpha: true, powerPreference: 'high-performance', stencil: false, depth: true });
+  r.setPixelRatio(dpr);
   r.outputColorSpace = THREE.SRGBColorSpace;
   r.toneMapping = THREE.ACESFilmicToneMapping;
   r.toneMappingExposure = 1.05;
   return r;
 }
+/* Adaptive quality: watch real frame times; if a device can't keep up, lower render resolution
+   step by step, and as a last resort ask motion.js to drop the light-rays layer. */
+const governor = (() => {
+  const renderers = new Set();
+  let level = 0, samples = [], last = 0;
+  const steps = [null, 1.25, 1, 0.8];
+  const apply = () => {
+    const cap = steps[level];
+    renderers.forEach((r) => { if (cap) { r.setPixelRatio(Math.min(r.getPixelRatio(), cap)); r.__resize && r.__resize(); } });
+    if (level >= 2) window.dispatchEvent(new Event('perf-low'));
+  };
+  return {
+    add(r) { renderers.add(r); },
+    tick(now) {
+      if (last) samples.push(now - last);
+      last = now;
+      if (samples.length >= 40) {
+        samples.sort((a, b) => a - b);
+        const median = samples[20];
+        samples = [];
+        if (median > 21 && level < steps.length - 1) { level++; apply(); }
+      }
+    },
+    pause() { last = 0; samples = []; }
+  };
+})();
+
 function runWhenVisible(el, frame) {
   let visible = false, raf = 0;
-  const loop = () => { if (!visible) return; frame(); raf = requestAnimationFrame(loop); };
-  new IntersectionObserver(([e]) => { visible = e.isIntersecting; cancelAnimationFrame(raf); if (visible) loop(); }).observe(el);
+  const loop = (now) => { if (!visible) return; governor.tick(now); frame(); raf = requestAnimationFrame(loop); };
+  new IntersectionObserver(([e]) => { visible = e.isIntersecting; cancelAnimationFrame(raf); governor.pause(); if (visible) raf = requestAnimationFrame(loop); }).observe(el);
+  document.addEventListener('visibilitychange', () => governor.pause());
 }
 
 /* ================= HERO ================= */
@@ -34,30 +63,32 @@ function runWhenVisible(el, frame) {
   cam.position.set(0, 0, 14);
   const pm = new THREE.PMREMGenerator(R);
   scene.environment = pm.fromScene(new RoomEnvironment(R), 0.04).texture;
+  scene.matrixWorldAutoUpdate = true;
   scene.add(new THREE.HemisphereLight(0xffffff, 0xe8e2d0, 0.8));
   const sun = new THREE.DirectionalLight(0xffffff, 1.6); sun.position.set(4, 6, 8); scene.add(sun);
 
-  const gold = new THREE.MeshPhysicalMaterial({ color: 0xd9b45f, metalness: 1, roughness: 0.18, clearcoat: 1, clearcoatRoughness: 0.08 });
-  const emerald = new THREE.MeshPhysicalMaterial({ color: 0x14845a, metalness: 0.1, roughness: 0.08, transmission: 0.55, thickness: 1.5, ior: 1.45, clearcoat: 1 });
-  const ceramic = new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: 0, roughness: 0.25, clearcoat: 1, clearcoatRoughness: 0.1, sheen: 0.4 });
-  const deep = new THREE.MeshPhysicalMaterial({ color: 0x0f5c3f, metalness: 0.3, roughness: 0.2, clearcoat: 1 });
+  // MeshStandardMaterial only: no transmission/clearcoat passes, so each frame is a single cheap draw
+  const gold = new THREE.MeshStandardMaterial({ color: 0xd9b45f, metalness: 1, roughness: 0.2 });
+  const emerald = new THREE.MeshStandardMaterial({ color: 0x14845a, metalness: 0.35, roughness: 0.12 });
+  const ceramic = new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0, roughness: 0.3 });
+  const deep = new THREE.MeshStandardMaterial({ color: 0x0f5c3f, metalness: 0.45, roughness: 0.2 });
 
   const world = new THREE.Group(); scene.add(world);
 
   // halo ring behind the head
-  const halo = new THREE.Mesh(new THREE.TorusGeometry(2.05, 0.07, 32, 200), gold);
+  const halo = new THREE.Mesh(new THREE.TorusGeometry(2.05, 0.07, 16, 120), gold);
   halo.position.set(0, 2.55, -1.6); halo.rotation.x = 1.25; world.add(halo);
-  const halo2 = new THREE.Mesh(new THREE.TorusGeometry(2.55, 0.025, 16, 200), gold);
+  const halo2 = new THREE.Mesh(new THREE.TorusGeometry(2.55, 0.025, 8, 120), gold);
   halo2.position.copy(halo.position); halo2.rotation.set(1.1, 0.35, 0); world.add(halo2);
 
   // floating objects [geometry, material, x, y, z, scale]
   const G = {
-    sphere: new THREE.SphereGeometry(1, 48, 48),
-    torus: new THREE.TorusGeometry(0.8, 0.32, 32, 80),
-    capsule: new THREE.CapsuleGeometry(0.45, 0.9, 12, 32),
+    sphere: new THREE.SphereGeometry(1, 32, 24),
+    torus: new THREE.TorusGeometry(0.8, 0.32, 20, 48),
+    capsule: new THREE.CapsuleGeometry(0.45, 0.9, 8, 24),
     ico: new THREE.IcosahedronGeometry(1, 0),
-    cone: new THREE.ConeGeometry(0.8, 1.3, 48),
-    box: new THREE.BoxGeometry(1, 1, 1, 4, 4, 4)
+    cone: new THREE.ConeGeometry(0.8, 1.3, 32),
+    box: new THREE.BoxGeometry(1, 1, 1)
   };
   const items = mobile ? [
     ['sphere', gold, -3.3, 3.2, 0, .42], ['torus', emerald, 3.4, 1.6, 0, .6], ['ico', deep, -3.4, -2.4, 0.5, .5], ['capsule', ceramic, 3.3, -3.0, 0, .6]
@@ -90,6 +121,7 @@ function runWhenVisible(el, frame) {
     const visH = 2 * Math.tan(THREE.MathUtils.degToRad(cam.fov / 2)) * cam.position.z;
     world.scale.setScalar(visH / 15);
   }
+  R.__resize = resize;
   window.addEventListener('resize', resize); window.addEventListener('load', resize); resize();
 
   const m = { x: 0, y: 0, tx: 0, ty: 0 };
@@ -141,6 +173,7 @@ function runWhenVisible(el, frame) {
   const pts = new THREE.Points(geo, mat);
   pts.position.y = -3; scene.add(pts);
   const resize = () => { const w = host.clientWidth, h = host.clientHeight; R.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); };
+  R.__resize = resize;
   window.addEventListener('resize', resize); resize();
   const clock = new THREE.Clock();
   runWhenVisible(host, () => {
